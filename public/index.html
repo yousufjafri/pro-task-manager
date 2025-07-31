@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pro Task Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex items-center justify-center">
+  <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-lg">
+    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">🌟 Task Manager</h1>
+    <div class="flex gap-2 mb-4">
+      <input id="taskInput" class="flex-grow border border-gray-300 rounded px-4 py-2" placeholder="Enter a new task" />
+      <button onclick="addTask()" class="bg-blue-600 text-white px-4 rounded hover:bg-blue-700">Add</button>
+    </div>
+    <ul id="taskList" class="space-y-2"></ul>
+  </div>
+
+  <script>
+    async function fetchTasks() {
+      const res = await fetch('/tasks');
+      const tasks = await res.json();
+      document.getElementById('taskList').innerHTML = tasks.map(t => `
+        <li class="bg-gray-100 p-3 rounded flex justify-between items-center">
+          <span class="${t.completed ? 'line-through text-gray-400' : ''}">${t.text}</span>
+          <div class="flex gap-2">
+            <button onclick="toggleComplete('${t._id}', '${t._rev}', ${!t.completed})"
+              class="text-green-600 hover:underline">${t.completed ? 'Undo' : 'Done'}</button>
+            <button onclick="deleteTask('${t._id}', '${t._rev}')" class="text-red-500 hover:underline">Delete</button>
+          </div>
+        </li>
+      `).join('');
+    }
+
+    async function addTask() {
+      const input = document.getElementById('taskInput');
+      const text = input.value.trim();
+      if (!text) return;
+      await fetch('/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, completed: false }) // 🟢 Set default to false
+      });
+      input.value = '';
+      fetchTasks();
+    }
+
+    async function deleteTask(id, rev) {
+      await fetch(`/tasks/${id}?rev=${rev}`, { method: 'DELETE' });
+      fetchTasks();
+    }
+
+    async function toggleComplete(id, rev, newStatus) {
+      await fetch(`/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rev, completed: newStatus })
+      });
+      fetchTasks();
+    }
+
+    fetchTasks();
+  </script>
+</body>
+</html>
