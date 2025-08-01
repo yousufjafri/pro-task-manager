@@ -1,2 +1,9 @@
+# Ignore environment secrets
 .env
-node_modules
+
+# Ignore node modules
+node_modules/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
